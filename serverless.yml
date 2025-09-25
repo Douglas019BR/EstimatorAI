@@ -1,25 +1,74 @@
-service: casetest-generator
+service: estimator-ai
 
 provider:
   name: aws
   runtime: python3.9
   region: us-east-1
+  environment:
+    S3_BUCKET: ${self:custom.bucketName}
+    SQS_QUEUE_URL: ${self:custom.queueUrl}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
             - bedrock:InvokeModel
-          Resource: '*'
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: 
+            - "arn:aws:s3:::${self:custom.bucketName}/*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+          Resource: 
+            - "arn:aws:sqs:${self:provider.region}:*:${self:custom.queueName}"
+
+custom:
+  bucketName: estimator-ai-results-${self:provider.stage}
+  queueName: estimator-ai-queue-${self:provider.stage}
+  queueUrl: https://sqs.${self:provider.region}.amazonaws.com/${aws:accountId}/${self:custom.queueName}
 
 functions:
-  generateTestCases:
+  estimate:
     handler: lambda-function/handler.lambda_handler
+    timeout: 30
     events:
       - http:
-          path: /generate
+          path: estimate
           method: post
           cors: true
+
+  processor:
+    handler: lambda-function/processor.lambda_handler
+    timeout: 900  # 15 minutes
+    events:
+      - sqs:
+          arn: "arn:aws:sqs:${self:provider.region}:${aws:accountId}:${self:custom.queueName}"
+          batchSize: 1
+
+resources:
+  Resources:
+    EstimatorS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+
+    EstimatorSQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.queueName}
+        VisibilityTimeoutSeconds: 960  # 16 minutes (more than Lambda timeout)
+        MessageRetentionPeriod: 1209600  # 14 days
 
 plugins:
   - serverless-python-requirements

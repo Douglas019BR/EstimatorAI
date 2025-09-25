@@ -1,11 +1,13 @@
 graph TD
     A[Client Request] --> B[API Gateway]
-    B --> C[Lambda Function]
+    B --> C[Lambda Handler]
     C --> D[Return ID to Client]
-    C --> E[Call Bedrock Model]
-    E --> F[Save Result to S3]
-    F --> G[Fine-tuning Process]
-    G --> E
+    C --> E[Send to SQS Queue]
+    E --> F[Processor Lambda]
+    F --> G[Call Bedrock Model]
+    G --> H[Save Result to S3]
+    H --> I[Fine-tuning Process]
+    I --> G
     
     subgraph "AWS Services"
         B
@@ -13,5 +15,7 @@ graph TD
         E
         F
         G
+        H
+        I
     end
     
