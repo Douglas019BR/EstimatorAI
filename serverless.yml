@@ -1,0 +1,25 @@
+service: casetest-generator
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+          Resource: '*'
+
+functions:
+  generateTestCases:
+    handler: lambda-function/handler.lambda_handler
+    events:
+      - http:
+          path: /generate
+          method: post
+          cors: true
+
+plugins:
+  - serverless-python-requirements
