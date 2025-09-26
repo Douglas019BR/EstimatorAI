@@ -1,0 +1,13 @@
+.serverless/
+node_modules/
+.env
+.env.*
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.zip
+*.tar.gz
+
+package-lock.json
+package.json

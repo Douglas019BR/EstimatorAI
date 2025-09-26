@@ -39,24 +39,24 @@ Instruções passo a passo:
 
 Formato de Saída (JSON):
 ```json
-{
-  "refined_requirements": {
+{{
+  "refined_requirements": {{
     "epics": [
-      {
+      {{
         "name": "Nome do Épico",
         "description": "Descrição detalhada",
         "priority": "Alta/Média/Baixa",
         "risk_factors": ["fatores de risco identificados"]
-      }
+      }}
     ]
-  },
-  "risk_analysis": {
+  }},
+  "risk_analysis": {{
     "identified_risks": ["lista de riscos baseados nas considerações"],
     "mitigation_strategies": ["estratégias para mitigar os riscos"],
     "impact_on_timeline": "descrição do impacto no cronograma"
-  },
+  }},
   "tasks": [
-    {
+    {{
       "id": "T001",
       "name": "Nome da Tarefa",
       "description": "Descrição da tarefa",
@@ -66,30 +66,30 @@ Formato de Saída (JSON):
       "risk_level": "Baixo/Médio/Alto",
       "dependencies": ["T002", "T003"],
       "considerations": "considerações específicas se aplicável"
-    }
+    }}
   ],
-  "work_plan": {
+  "work_plan": {{
     "phases": [
-      {
+      {{
         "name": "Fase 1",
         "tasks": ["T001", "T002"],
         "estimated_duration": "2 semanas",
         "deliverables": ["Entregável 1"],
         "critical_points": ["pontos críticos desta fase"]
-      }
+      }}
     ],
     "total_estimated_points": 120,
     "estimated_duration": "6 semanas",
     "buffer_percentage": 20,
     "milestones": [
-      {
+      {{
         "name": "Marco 1",
         "date": "Semana 2",
         "deliverable": "MVP funcional"
-      }
+      }}
     ]
-  }
-}
+  }}
+}}
 ```
 
 Lembre-se: Seja realista nas estimativas, gere a estimativa em pontos, pois vai ser multiplicado pela maturidade e experiencia da equipe, inclua tempo para testes e ajustes. Dê atenção especial às complicações mencionadas e ajuste as estimativas adequadamente. Base suas estimativas em boas práticas de desenvolvimento de software.

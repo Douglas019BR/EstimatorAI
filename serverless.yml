@@ -4,9 +4,10 @@ provider:
   name: aws
   runtime: python3.9
   region: us-east-1
+  stage: ${opt:stage, 'dev'}
   environment:
     S3_BUCKET: ${self:custom.bucketName}
-    SQS_QUEUE_URL: ${self:custom.queueUrl}
+    SQS_QUEUE_URL: https://sqs.${self:provider.region}.amazonaws.com/${aws:accountId}/${self:custom.queueName}
   iam:
     role:
       statements:
@@ -31,17 +32,25 @@ provider:
 custom:
   bucketName: estimator-ai-results-${self:provider.stage}
   queueName: estimator-ai-queue-${self:provider.stage}
-  queueUrl: https://sqs.${self:provider.region}.amazonaws.com/${aws:accountId}/${self:custom.queueName}
 
 functions:
   estimate:
     handler: lambda-function/handler.lambda_handler
-    timeout: 30
+    timeout: 29 #seconds
     events:
       - http:
           path: estimate
           method: post
-          cors: true
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
 
   processor:
     handler: lambda-function/processor.lambda_handler
@@ -58,17 +67,34 @@ resources:
       Properties:
         BucketName: ${self:custom.bucketName}
         PublicAccessBlockConfiguration:
-          BlockPublicAcls: true
-          BlockPublicPolicy: true
-          IgnorePublicAcls: true
-          RestrictPublicBuckets: true
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - HEAD
+              AllowedOrigins:
+                - "*"
+              MaxAge: 3000
 
-    EstimatorSQSQueue:
-      Type: AWS::SQS::Queue
+    EstimatorS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
       Properties:
-        QueueName: ${self:custom.queueName}
-        VisibilityTimeoutSeconds: 960  # 16 minutes (more than Lambda timeout)
-        MessageRetentionPeriod: 1209600  # 14 days
+        Bucket: !Ref EstimatorS3Bucket
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Join
+                - ""
+                - - !GetAtt EstimatorS3Bucket.Arn
+                  - "/*"
 
 plugins:
   - serverless-python-requirements
