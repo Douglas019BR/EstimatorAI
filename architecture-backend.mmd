@@ -1,0 +1,43 @@
+graph TD
+    A[Client Request] --> B[API Gateway + API Key]
+    B --> |Validates API Key| C[Lambda Handler]
+    C --> D[Return Request ID]
+    C --> E[Send to SQS Queue]
+    E --> F[Processor Lambda]
+    F --> G[Bedrock Guardrails]
+    G --> |Validates Content| H[Claude Model]
+    H --> I[Save Result to S3]
+    
+    subgraph "Security Layer"
+        B
+        G
+        J[IAM Roles & Policies]
+    end
+    
+    subgraph "Processing Pipeline"
+        C
+        E
+        F
+        H
+    end
+    
+    subgraph "Storage"
+        I
+        K[S3 Results Bucket]
+    end
+    
+    subgraph "Monitoring"
+        L[CloudWatch Logs]
+        M[API Gateway Usage Plans]
+    end
+    
+    F --> J
+    C --> J
+    I --> K
+    B --> L
+    F --> L
+    B --> M
+    
+    style B fill:#ff9999
+    style G fill:#ff9999
+    style J fill:#ff9999

@@ -14,6 +14,7 @@ provider:
         - Effect: Allow
           Action:
             - bedrock:InvokeModel
+            - bedrock:ApplyGuardrail
           Resource: "*"
         - Effect: Allow
           Action:
@@ -41,6 +42,7 @@ functions:
       - http:
           path: estimate
           method: post
+          private: true
           cors:
             origin: '*'
             headers:
@@ -62,6 +64,40 @@ functions:
 
 resources:
   Resources:
+    # API Key
+    EstimatorApiKey:
+      Type: AWS::ApiGateway::ApiKey
+      Properties:
+        Name: estimator-ai-key-${self:provider.stage}
+        Enabled: true
+
+    # Usage Plan (obrigatório, mas sem limites)
+    EstimatorUsagePlan:
+      Type: AWS::ApiGateway::UsagePlan
+      Properties:
+        UsagePlanName: estimator-ai-plan-${self:provider.stage}
+        ApiStages:
+          - ApiId: !Ref ApiGatewayRestApi
+            Stage: ${self:provider.stage}
+
+    # Link API Key to Usage Plan
+    EstimatorUsagePlanKey:
+      Type: AWS::ApiGateway::UsagePlanKey
+      Properties:
+        KeyId: !Ref EstimatorApiKey
+        KeyType: API_KEY
+        UsagePlanId: !Ref EstimatorUsagePlan
+
+    # Store API Key in Secrets Manager
+    EstimatorApiKeySecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: estimator-ai/api-key-${self:provider.stage}
+        SecretString: !Sub |
+          {
+            "apiKey": "${EstimatorApiKey}"
+          }
+
     EstimatorS3Bucket:
       Type: AWS::S3::Bucket
       Properties:

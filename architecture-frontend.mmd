@@ -1,0 +1,61 @@
+graph TD
+    A[User Browser] --> B[CloudFront Distribution]
+    B --> |Static Assets| C[S3 Website Bucket]
+    B --> |API Calls /api/*| D[Proxy Lambda]
+    
+    D --> E[Secrets Manager]
+    E --> |API Key| D
+    D --> F[Backend API Gateway]
+    F --> G[EstimatorAI Backend]
+    
+    subgraph "Frontend Infrastructure"
+        B
+        C
+        H[Route 53 DNS]
+        I[SSL Certificate]
+    end
+    
+    subgraph "Security & Proxy"
+        D
+        E
+        J[IAM Role for Lambda]
+        K[CORS Headers]
+    end
+    
+    subgraph "Backend Services"
+        F
+        G
+        L[SQS Queue]
+        M[Processor Lambda]
+        N[Bedrock + Guardrails]
+        O[S3 Results]
+    end
+    
+    subgraph "Monitoring & Caching"
+        P[CloudWatch Logs]
+        Q[CloudFront Cache]
+        R[Lambda Logs]
+    end
+    
+    H --> B
+    I --> B
+    D --> J
+    D --> K
+    G --> L
+    L --> M
+    M --> N
+    N --> O
+    
+    B --> P
+    B --> Q
+    D --> R
+    
+    style B fill:#99ccff
+    style D fill:#ffcc99
+    style E fill:#ff9999
+    style J fill:#ff9999
+    style N fill:#ff9999
+    
+    classDef security fill:#ff9999,stroke:#333,stroke-width:2px
+    classDef frontend fill:#99ccff,stroke:#333,stroke-width:2px
+    classDef proxy fill:#ffcc99,stroke:#333,stroke-width:2px

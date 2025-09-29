@@ -4,7 +4,6 @@ import os
 import logging
 from datetime import datetime
 
-# Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -15,7 +14,7 @@ with open(os.path.join(os.path.dirname(__file__), 'prompt.md'), 'r') as f:
     PROMPT_TEMPLATE = f.read()
 
 S3_BUCKET = os.environ.get('S3_BUCKET', 'estimator-ai-results')
-MODEL_ID = 'anthropic.claude-3-haiku-20240307-v1:0'
+MODEL_ID = 'us.anthropic.claude-3-5-haiku-20241022-v1:0'
 
 def lambda_handler(event, context):
     logger.info(f"Received event: {json.dumps(event, default=str)}")
@@ -33,19 +32,16 @@ def lambda_handler(event, context):
             logger.info(f"Requirements: {requirements[:200]}...")
             logger.info(f"Additional considerations: {additional_considerations}")
             
-            # Process estimation
             logger.info("Starting estimation generation...")
             estimation = generate_project_estimation(requirements, additional_considerations)
             logger.info(f"Estimation generated successfully: {json.dumps(estimation, default=str)[:500]}...")
             
-            # Save to S3
             logger.info(f"Saving result to S3 bucket: {S3_BUCKET}")
             save_result_to_s3(request_id, requirements, additional_considerations, estimation)
             logger.info(f"Result saved successfully for request_id: {request_id}")
                 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}", exc_info=True)
-        # Save error to S3
         if 'request_id' in locals():
             logger.info(f"Saving error to S3 for request_id: {request_id}")
             save_error_to_s3(request_id, str(e))
@@ -85,6 +81,8 @@ def generate_project_estimation(requirements, additional_considerations):
     
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
+        guardrailIdentifier='hfguz4w7g9mo',
+        guardrailVersion='1',
         body=json.dumps(bedrock_request)
     )
     
